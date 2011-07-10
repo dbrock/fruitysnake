@@ -1,7 +1,7 @@
 ' FruitySnake --- a buggy and lame snake game written in QBasic
-' Copyright (c) 1999  Daniel Brockman
+' Copyright (C) 1999, 2004  Daniel Brockman
 
-' Version: 0.4
+' Version: 0.5
 
 ' This program is free software; you can redistribute it and/or modify
 ' it under the terms of the GNU General Public License as published by
@@ -16,6 +16,33 @@
 ' To receive a copy of the GNU General Public License, write to the
 ' Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 ' MA 02111-1307 USA.
+
+' Wishlist (in rough order of importance):
+
+' The speed check worked on a computer that was old in 1999, but it
+' does not work very well on today's computers.
+
+' The top panel does not show the scores and other information
+' correctly.  Among other things, it needs to handle both players.
+
+' Most levels are not yet adapted to two-player mode.  In particular,
+' they have only one starting place.
+
+' It would be nice to get rid of all the visual glitches, even though
+' they are somewhat charming.
+
+' The snakes should not be able to run over one another.
+
+' More levels!
+
+' The code could use a major clean-up.  Even though QBasic provides
+' fairly limited tools for abstraction, this code could look
+' significantly better than it currently does.
+
+' Possibility to shop for cool stuff using the credits.  Perhaps extra
+' lives could be available for purchase.  Or how about some weapons to
+' disrupt the other player in their fruit quest?  I can imagine lots of
+' cool stuff for which a shopping system could be used.
 
 
 ' -----------------------
@@ -215,14 +242,14 @@ APPLEGFX = "L1E1F1G1H1 L1E2F2G2H2 C" + STR$(PEACH + 1) + " BU1 E1 BR2 F1 BD2 G1 
 ' ---------------------
 ' Variable declarations
 ' ---------------------
-DIM SHARED X(2, 1000), Y(2, 1000)
-DIM SHARED BODYPART(2, 1000) AS STRING, DIRECTION(2, 1000) AS INTEGER, STOMACH(2, 1000, 2) AS LONG
+DIM SHARED X(2, 1800), Y(2, 1800)
+DIM SHARED BODYPART(2, 1800) AS STRING, DIRECTION(2, 1800) AS INTEGER, STOMACH(2, 1800, 2) AS LONG
 DIM SHARED LENGTH(2) AS INTEGER, CURRENTLENGTH(2) AS INTEGER, LENGTHNEEDED AS INTEGER
 DIM SHARED PEACHX AS INTEGER, PEACHY AS INTEGER, PEACHEXISTS AS INTEGER
 DIM SHARED PEACHPROBABILITY AS DOUBLE, PEACHTIMEOUT AS INTEGER, PEACHCREDITS AS LONG
 DIM SHARED GOSTEP AS INTEGER, SNAKECOLORTOGGLE(2) AS INTEGER
 DIM SHARED GOX(2) AS INTEGER, GOY(2) AS INTEGER, FROZEN AS INTEGER
-DIM SHARED CHX(2) AS INTEGER, CHY(2) AS INTEGER, FREEZED AS INTEGER
+DIM SHARED CHX(2) AS INTEGER, CHY(2) AS INTEGER
 DIM SHARED RUNNING(2) AS INTEGER, EXITSUB AS INTEGER, BONUSLEVEL AS INTEGER
 DIM SHARED SPEED AS LONG, CURRENTSPEED AS LONG, LIVES(2) AS INTEGER
 DIM SHARED LEVEL AS INTEGER, CREDITS(2) AS LONG, BONUSCREDITS AS LONG, LEVELCREDITS(2) AS LONG
@@ -297,7 +324,7 @@ MAIN:
     LINE (202, 50)-(208, 75), LIGHTPURPLE, BF
     LINE (165, 44)-(213, 50), LIGHTPURPLE, BF
     LINE (165, 75)-(213, 81), LIGHTPURPLE, BF
-    LOCATE 10, 14: COLOR WHITE: PRINT "0.4"
+    LOCATE 10, 14: COLOR WHITE: PRINT "0.5"
     CALL CENTER("SEE INSTRUCTIONS? (Y/N)", 15, 1, 0, 0, 0, 1, 1, 1, 12)
     CALL CENTER("PRESS Y IF YOU ENCOUNTER PROBLEMS TRYING TO PLAY", 17, 0, 25, 0, -1, 1, 1, 1, 12)
  
@@ -306,8 +333,8 @@ MAIN:
       CALL CENTER("MAKE SURE CAPS LOCK, NUM LOCK AND SCROLL LOCK ARE OFF! PRESS Q ANYTIME TO QUIT IMMEDIATLEY OR P TO PAUSE THE GAME.", 0, 1, 30, 1, 0, 1, 1, 1, 10): CALL PAUSE
       CALL CENTER("YOU CAN SEE WHERE YOUR FRUITY SNAKE WILL SPAWN WHEN YOU START BY LOOKING FOR A SLIGHTLY DARKER SPOT ON THE GROUND.", 0, 1, 30, 1, 0, 1, 1, 1, 10): CALL PAUSE
       CALL CENTER( _
-"YOUR GOAL IS TO GROW LARGE ENOUGH TO QUALIFY FOR THE NEXT LEVEL.  YOU GROW BY EATING THE YELLOW GRAPEFRUITS.  IF YOU WANT CREDITS, AIM FOR THE LITTLE ORANGE PEACHES.  BUT YOU MUST HURRY!  THEIR CREDITS ARE DRAINED FAST UNTIL THEY DISAPPEAR.", 0, 1, 30 _
-, 1, 0, 1, 1, 1, 10): CALL PAUSE
+"YOUR GOAL IS TO GROW LARGE ENOUGH TO QUALIFY FOR THE NEXT LEVEL.  YOU GROW BY EATING THE YELLOW GRAPEFRUITS.  IF YOU WANT CREDITS, AIM FOR THE LITTLE ORANGE PEACHES.  BUT YOU MUST HURRY!  THEIR CREDITS ARE DRAINED FAST UNTIL THEY DISAPPEAR.", 0, 1 _
+, 30, 1, 0, 1, 1, 1, 10): CALL PAUSE
       CALL CENTER("IF YOU RUN INTO THE PURPLE SURFACES, YOU WILL BE MAGICALLY TELEPORTED TO ANOTHER LOCATION.", 0, 1, 30, 1, 0, 1, 1, 1, 10): CALL PAUSE
       CALL CENTER("THERE ARE DIFFERENT GROUND TYPES.  THE BLUE ONE IS ICE, IT WILL SPEED YOU UP.  THE BROWN ONE IS MUD AND WILL SLOW YOU DOWN.", 0, 1, 30, 1, 0, 1, 1, 1, 10): CALL PAUSE
       CALL CENTER("WELL, THATS ALL.  HAVE FUN!", 0, 1, 30, 1, 0, 1, 1, 1, 10): CALL PAUSE
@@ -364,7 +391,7 @@ MAINLOOP:
       FROZEN = FALSE
     END IF
 
-    IF NOT FREEZED AND NOT FROZEN THEN
+    IF NOT FROZEN THEN
 
       ' Peaches -- the small bonuses
       IF PEACHEXISTS = TRUE THEN
@@ -453,6 +480,7 @@ MAINLOOP:
        
        IF RUNNING(i%) THEN
         SNAKECOLORTOGGLE(i%) = NOT SNAKECOLORTOGGLE(i%)
+        IF (X(i%, 1) > 60 OR Y(i%, 1) > 30) THEN DIE (i%)
         IF GOX(i%) THEN
           BODYPART(i%, 1) = CRNTCLR$ + HORIZONTALGFX
           BODYPARTCOORDS(X(i%, 1), Y(i%, 1)) = CRNTCLR$ + HORIZONTALGFX
@@ -953,7 +981,9 @@ SUB DIE (who%)
   END IF
  
   FOR i% = 1 TO CURRENTLENGTH(who%)
-    CALL CLEARSQUARE(INT(X(who%, i%)), INT(Y(who%, i%)))
+    IF X(who%, i%) > 60 AND Y(who%, i%) > 30 THEN
+      CALL CLEARSQUARE(INT(X(who%, i%)), INT(Y(who%, i%)))
+    END IF
   NEXT
 
   CURRENTLENGTH(who%) = 0
@@ -1350,12 +1380,13 @@ END FUNCTION
 SUB NEXTLEVEL
   CALL DISABLEKEYS
   UNLOADLEVEL = TRUE: UNLOADDELAY = 20
-  ERASE RUNNING: FREEZED = TRUE: GOX = 0: GOY = 0
+  ERASE RUNNING: GOX = 0: GOY = 0
 
   CALL PLAYSOUND("NEXTLEVEL")
   CREDITS = CREDITS + BONUSCREDITS
   LEVEL = LEVEL + 1
-  LIVES = LIVES + 1
+  LIVES(1) = LIVES(1) + 1
+  LIVES(2) = LIVES(2) + 1
 END SUB
 
 SUB OPTIONS
